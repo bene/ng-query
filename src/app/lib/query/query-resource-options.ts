@@ -1,7 +1,5 @@
 import { QueryResourceOptions } from './types';
 
-export function queryResourceOptions<P, T>(
-  options: QueryResourceOptions<P, T>,
-): QueryResourceOptions<P, T> {
+export function queryResourceOptions<T>(options: QueryResourceOptions<T>): QueryResourceOptions<T> {
   return options;
 }

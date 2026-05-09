@@ -4,7 +4,7 @@ export type QueryResource<T> = {
   value: Signal<T | undefined>;
 };
 
-export type QueryResourceOptions<P, T> = {
+export type QueryResourceOptions<T> = {
   queryKey?: string[];
-  loader: (params: P) => Promise<T>;
+  loader: () => Promise<T>;
 };

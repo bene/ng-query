@@ -1,8 +1,8 @@
+import { signal } from '@angular/core';
 import { QueryResource, QueryResourceOptions } from './types';
 
-export function queryResource<P, T>(
-  options: QueryResourceOptions<P, T>,
-  params: () => P,
-): QueryResource<T> {
-  return {} as QueryResource<T>;
+export function queryResource<T>(options: QueryResourceOptions<T>): QueryResource<T> {
+  return {
+    value: signal(undefined),
+  } as QueryResource<T>;
 }
