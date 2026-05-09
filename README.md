@@ -130,4 +130,6 @@ If you open an issue, include:
 
 ## License
 
-Choose a license before your first public release (for example, MIT) and add a `LICENSE` file.
+This project is licensed under the MIT License. See [LICENSE.md](LICENSE.md) for details.
+
+Made in Vienna 🇪🇺 for the Viennese people, open-sourced for the world.
