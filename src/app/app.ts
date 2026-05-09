@@ -9,7 +9,11 @@ import { queryResource } from './lib/query';
 })
 export class App {
   booksService = inject(BooksService);
-  userId = signal(1);
 
+  userId = signal(1);
   booksResource = queryResource(this.booksService.createBooksQueryOptions(this.userId));
+
+  toggleUser() {
+    this.userId.update((id) => (id === 1 ? 2 : 1));
+  }
 }

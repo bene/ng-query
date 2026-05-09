@@ -1,4 +1,8 @@
 <p>
+  @if (booksResource.isLoading()) {
+    Loading...
+  }
+
   @if (booksResource.value(); as books) {
     <ul>
       @for (book of books; track book.id) {
@@ -6,4 +10,8 @@
       }
     </ul>
   }
+
+  {{ userId() === 1 ? 'User 1' : 'User 2' }}
+
+  <button (click)="toggleUser()">Toggle User</button>
 </p>

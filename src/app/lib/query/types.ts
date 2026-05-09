@@ -1,10 +1,30 @@
-import { Signal } from '@angular/core';
+import { ResourceStatus, Signal } from '@angular/core';
+
+export type QueryKeyPrimitive = boolean | null | number | string;
+export type QueryKeyValue = QueryKeyPrimitive | QueryKeyValue[] | { [key: string]: QueryKeyValue };
+export type QueryKey = readonly QueryKeyValue[];
+
+export type QueryLoaderContext<TQueryKey extends QueryKey> = {
+  queryKey: TQueryKey;
+  abortSignal: AbortSignal;
+  previousStatus: ResourceStatus;
+};
+
+export type QueryStatus = ResourceStatus;
 
 export type QueryResource<T> = {
   value: Signal<T | undefined>;
+  status: Signal<QueryStatus>;
+  error: Signal<Error | undefined>;
+  isIdle: Signal<boolean>;
+  isLoading: Signal<boolean>;
+  isFetching: Signal<boolean>;
+  isSuccess: Signal<boolean>;
+  isError: Signal<boolean>;
+  reload: () => boolean;
 };
 
-export type QueryResourceOptions<T> = {
-  queryKey?: string[];
-  loader: () => Promise<T>;
+export type QueryResourceOptions<T, TQueryKey extends QueryKey = QueryKey> = {
+  queryKey: () => TQueryKey;
+  loader: (context: QueryLoaderContext<TQueryKey>) => Promise<T>;
 };

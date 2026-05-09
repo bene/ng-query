@@ -5,10 +5,13 @@ import { queryResourceOptions } from './lib/query/query-resource-options';
 export class BooksService {
   createBooksQueryOptions = (userId: Signal<number>) => {
     return queryResourceOptions({
-      loader: async () => {
+      queryKey: () => ['books', userId()] as const,
+      loader: async ({ queryKey }) => {
+        const [, userId] = queryKey;
+
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        return await mockFetchBooks({ userId: userId() });
+        return await mockFetchBooks({ userId });
       },
     });
   };

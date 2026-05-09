@@ -1,59 +1,140 @@
-# ResourceQuery
+# Resource Query
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.10.
+Resource Query is a lightweight Angular library that provides query-style data fetching with Signals and `resource()`: cache by key, automatic revalidation, and ergonomic status flags for UI state.
 
-## Development server
+It is designed to feel familiar if you have used query libraries before, while staying aligned with modern Angular primitives.
 
-To start a local development server, run:
+## Why This Library
 
-```bash
-ng serve
-```
+- Signal-first API for Angular applications.
+- Query key based caching by value, not object identity.
+- Stale-while-revalidate behavior when a cached query is re-attached.
+- Small API surface that is easy to adopt incrementally.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Current Status
 
-## Code scaffolding
+- `queryResource` is implemented and covered by tests.
+- `mutationResource` is currently a placeholder API and is not production-ready yet.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Introduction Guide
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+### 1. Install dependencies and run the project
 
 ```bash
-ng generate --help
+npm install
+npm run start
 ```
 
-## Building
+This repository includes a demo Angular app, so you can see Resource Query in action immediately.
 
-To build the project run:
+### 2. Create typed query options
+
+```ts
+import { queryResourceOptions } from './lib/query/query-resource-options';
+
+export const booksQueryOptions = (userId: () => number) =>
+  queryResourceOptions({
+    queryKey: () => ['books', { userId: userId() }] as const,
+    loader: async ({ queryKey, abortSignal }) => {
+      const [, params] = queryKey;
+      const response = await fetch(`/api/users/${params.userId}/books`, { signal: abortSignal });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch books');
+      }
+
+      return (await response.json()) as Array<{ id: number; title: string }>;
+    },
+  });
+```
+
+### 3. Bind the query in an Angular component
+
+```ts
+import { Component, signal } from '@angular/core';
+import { queryResource } from './lib/query';
+
+@Component({
+  selector: 'app-books',
+  template: `
+    @if (books.isLoading()) {
+      <p>Loading...</p>
+    }
+
+    @if (books.isError()) {
+      <p>Something went wrong: {{ books.error()?.message }}</p>
+    }
+
+    @if (books.value(); as items) {
+      <ul>
+        @for (book of items; track book.id) {
+          <li>{{ book.title }}</li>
+        }
+      </ul>
+    }
+  `,
+})
+export class BooksComponent {
+  userId = signal(1);
+
+  books = queryResource(booksQueryOptions(() => this.userId()));
+}
+```
+
+### 4. Update query keys reactively
+
+When key values change, Resource Query re-executes the loader and updates the same query object signals.
+
+```ts
+this.userId.set(2);
+```
+
+### 5. Understand cache and revalidation behavior
+
+When another consumer attaches to the same query key value:
+
+- Cached data is returned immediately.
+- A background revalidation is triggered.
+- UI can detect this with `isFetching()`.
+
+## API at a Glance
+
+`queryResource(options)` returns:
+
+- `value(): T | undefined`
+- `status(): 'idle' | 'loading' | 'reloading' | 'resolved' | 'error' | 'local'`
+- `error(): Error | undefined`
+- `isIdle(): boolean`
+- `isLoading(): boolean`
+- `isFetching(): boolean`
+- `isSuccess(): boolean`
+- `isError(): boolean`
+- `reload(): boolean`
+
+## Development
+
+Run tests:
 
 ```bash
-ng build
+npm run test
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Contributing
 
-## Running unit tests
+Issues and pull requests are welcome.
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+If you open an issue, include:
 
-```bash
-ng test
-```
+- Angular version
+- Repro steps
+- Expected vs actual behavior
 
-## Running end-to-end tests
+## Roadmap
 
-For end-to-end (e2e) testing, run:
+- Production-ready mutation support
+- Better cache controls (stale time, garbage collection)
+- Devtools-friendly debugging hooks
 
-```bash
-ng e2e
-```
+## License
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Choose a license before your first public release (for example, MIT) and add a `LICENSE` file.
