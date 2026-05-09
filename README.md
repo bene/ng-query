@@ -132,6 +132,8 @@ If you open an issue, include:
 
 This project is licensed under the MIT License. See [LICENSE.md](LICENSE.md) for details.
 
-<p style="center">
+<hr/>
+
+<p align="center">
 Made with ❤️ in Vienna @WienIT 🇪🇺
 </p>
