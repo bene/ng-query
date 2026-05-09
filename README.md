@@ -18,32 +18,25 @@ It is designed to feel familiar if you have used query libraries before, while s
 
 ## Introduction Guide
 
-### 1. Install dependencies and run the project
+### 1. Install dependency
 
 ```bash
-npm install
-npm run start
+npm install ng-query
 ```
-
-This repository includes a demo Angular app, so you can see Resource Query in action immediately.
 
 ### 2. Create typed query options
 
 ```ts
-import { queryResourceOptions } from './lib/query/query-resource-options';
+import { queryResourceOptions } from 'ng-query';
 
 export const booksQueryOptions = (userId: () => number) =>
   queryResourceOptions({
-    queryKey: () => ['books', { userId: userId() }] as const,
+    queryKey: () => ['books', userId()] as const,
     loader: async ({ queryKey, abortSignal }) => {
-      const [, params] = queryKey;
-      const response = await fetch(`/api/users/${params.userId}/books`, { signal: abortSignal });
+      const [, userId] = queryKey;
+      const books = await fetchBooks(userId, { signal: abortSignal });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch books');
-      }
-
-      return (await response.json()) as Array<{ id: number; title: string }>;
+      return books;
     },
   });
 ```
@@ -52,7 +45,7 @@ export const booksQueryOptions = (userId: () => number) =>
 
 ```ts
 import { Component, signal } from '@angular/core';
-import { queryResource } from './lib/query';
+import { queryResource } from 'ng-query';
 
 @Component({
   selector: 'app-books',

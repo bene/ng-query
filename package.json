@@ -1,5 +1,5 @@
 {
-  "name": "resource-query",
+  "name": "ng-query",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
