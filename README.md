@@ -103,6 +103,7 @@ When another consumer attaches to the same query key value:
 - `isSuccess(): boolean`
 - `isError(): boolean`
 - `reload(): boolean`
+- `reset(): void`
 
 ## Development
 

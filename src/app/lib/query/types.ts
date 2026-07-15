@@ -22,6 +22,7 @@ export type QueryResource<T> = {
   isSuccess: Signal<boolean>;
   isError: Signal<boolean>;
   reload: () => boolean;
+  reset: () => void;
 };
 
 export type QueryRefetchInterval = number | false | (() => number | false | undefined);

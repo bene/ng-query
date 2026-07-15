@@ -220,4 +220,42 @@ describe('queryResource', () => {
       expect(loaderValues).toEqual([1, 2]);
     });
   });
+
+  it('clears cached data and reloads on reset', async () => {
+    const loaderValues: number[] = [];
+    const responses = createDeferred<Book[]>();
+
+    const booksQuery = TestBed.runInInjectionContext(() =>
+      queryResource(
+        queryResourceOptions({
+          queryKey: () => ['query-reset'] as const,
+          loader: async () => {
+            const nextValue = loaderValues.length + 1;
+            loaderValues.push(nextValue);
+
+            if (nextValue === 1) {
+              return [{ id: 1, title: 'Book 1' }];
+            }
+
+            return responses.promise;
+          },
+        }),
+      ),
+    );
+
+    await waitFor(() => booksQuery.isSuccess());
+    expect(booksQuery.value()).toEqual([{ id: 1, title: 'Book 1' }]);
+    expect(loaderValues).toEqual([1]);
+
+    booksQuery.reset();
+
+    await waitFor(() => booksQuery.isLoading());
+    expect(booksQuery.value()).toBeUndefined();
+
+    responses.resolve([{ id: 2, title: 'Book 2' }]);
+
+    await waitFor(() => booksQuery.value()?.[0]?.id === 2);
+    expect(booksQuery.value()).toEqual([{ id: 2, title: 'Book 2' }]);
+    expect(loaderValues).toEqual([1, 2]);
+  });
 });

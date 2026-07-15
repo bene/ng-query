@@ -200,5 +200,21 @@ export function queryResource<T, TQueryKey extends QueryKey>(
     reload: () => {
       return untracked(() => activeEntry()?.resource.reload() ?? false);
     },
+    reset: () => {
+      untracked(() => {
+        const queryKey = options.queryKey();
+        const cacheKey = serializeQueryKey(queryKey);
+        const cachedEntry = queryCache.get(cacheKey);
+
+        if (cachedEntry) {
+          cachedEntry.resource.destroy();
+          queryCache.delete(cacheKey);
+        }
+
+        const freshEntry = getOrCreateEntry(options, queryKey, cacheKey, injector);
+        lastCacheKey = cacheKey;
+        activeEntry.set(freshEntry);
+      });
+    },
   };
 }
