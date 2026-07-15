@@ -24,7 +24,10 @@ export type QueryResource<T> = {
   reload: () => boolean;
 };
 
+export type QueryRefetchInterval = number | false | (() => number | false | undefined);
+
 export type QueryResourceOptions<T, TQueryKey extends QueryKey = QueryKey> = {
   queryKey: () => TQueryKey;
+  refetchInterval?: QueryRefetchInterval;
   loader: (context: QueryLoaderContext<TQueryKey>) => Promise<T>;
 };

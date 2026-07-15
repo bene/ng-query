@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { queryResourceOptions } from './query-resource-options';
 import { queryResource } from './query-resource';
 
@@ -43,6 +43,11 @@ describe('queryResource', () => {
   beforeEach(() => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({});
+  });
+
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    vi.useRealTimers();
   });
 
   it('loads data for the current query key', async () => {
@@ -156,5 +161,63 @@ describe('queryResource', () => {
 
     await waitFor(() => secondConsumer.value()?.[0]?.title === secondResponse[0].title);
     expect(secondConsumer.value()).toEqual(secondResponse);
+  });
+
+  it('refetches data on the configured interval', async () => {
+    const loaderValues: number[] = [];
+
+    const booksQuery = TestBed.runInInjectionContext(() =>
+      queryResource(
+        queryResourceOptions({
+          queryKey: () => ['query-refetch-interval'] as const,
+          refetchInterval: 10,
+          loader: async () => {
+            const nextValue = loaderValues.length + 1;
+            loaderValues.push(nextValue);
+            return [{ id: nextValue, title: `Book ${nextValue}` }];
+          },
+        }),
+      ),
+    );
+
+    await waitFor(() => booksQuery.isSuccess());
+    await waitFor(() => (booksQuery.value()?.[0]?.id ?? 0) >= 3);
+
+    expect(loaderValues.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('updates a reactive refetch interval', async () => {
+    vi.useFakeTimers();
+
+    const interval = signal<number | false>(false);
+    const loaderValues: number[] = [];
+
+    TestBed.runInInjectionContext(() =>
+      queryResource(
+        queryResourceOptions({
+          queryKey: () => ['query-reactive-refetch-interval'] as const,
+          refetchInterval: () => interval(),
+          loader: async () => {
+            const nextValue = loaderValues.length + 1;
+            loaderValues.push(nextValue);
+            return [{ id: nextValue, title: `Book ${nextValue}` }];
+          },
+        }),
+      ),
+    );
+
+    await vi.waitFor(() => {
+      expect(loaderValues).toEqual([1]);
+    });
+
+    await vi.advanceTimersByTimeAsync(100);
+    expect(loaderValues).toEqual([1]);
+
+    interval.set(100);
+
+    await vi.advanceTimersByTimeAsync(100);
+    await vi.waitFor(() => {
+      expect(loaderValues).toEqual([1, 2]);
+    });
   });
 });

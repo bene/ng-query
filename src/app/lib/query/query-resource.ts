@@ -9,7 +9,13 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { QueryKey, QueryResource, QueryResourceOptions, QueryStatus } from './types';
+import {
+  QueryKey,
+  QueryRefetchInterval,
+  QueryResource,
+  QueryResourceOptions,
+  QueryStatus,
+} from './types';
 
 type QueryCacheEntry<T> = {
   resource: ResourceRef<T | undefined>;
@@ -96,7 +102,7 @@ function getOrCreateEntry<T, TQueryKey extends QueryKey>(
     }),
   };
 
-  queryCache.set(cacheKey, createdEntry as QueryCacheEntry<unknown>);
+  queryCache.set(cacheKey, createdEntry);
   return createdEntry;
 }
 
@@ -108,6 +114,20 @@ function revalidateEntryOnAttach(entry: QueryCacheEntry<unknown>): void {
       entry.resource.reload();
     }
   });
+}
+
+function resolveRefetchInterval(refetchInterval: QueryRefetchInterval | undefined): number | null {
+  const interval = typeof refetchInterval === 'function' ? refetchInterval() : refetchInterval;
+
+  if (interval === undefined || interval === false) {
+    return null;
+  }
+
+  if (!Number.isFinite(interval) || interval <= 0) {
+    throw new Error(`refetchInterval must be a positive finite number. Received ${interval}.`);
+  }
+
+  return interval;
 }
 
 export function queryResource<T, TQueryKey extends QueryKey>(
@@ -132,6 +152,24 @@ export function queryResource<T, TQueryKey extends QueryKey>(
     if (switchedEntry) {
       revalidateEntryOnAttach(nextEntry);
     }
+  });
+
+  effect((onCleanup) => {
+    const interval = resolveRefetchInterval(options.refetchInterval);
+
+    if (interval === null) {
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      untracked(() => {
+        activeEntry()?.resource.reload();
+      });
+    }, interval);
+
+    onCleanup(() => {
+      clearInterval(intervalId);
+    });
   });
 
   const value = computed(() => activeEntry()?.resource.value());
